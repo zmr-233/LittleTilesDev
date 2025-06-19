@@ -186,9 +186,11 @@ public class RenderingThread extends Thread {
                                         for (int h = 0; h < Facing.VALUES.length; h++) {
                                             Facing facing = Facing.VALUES[h];
                                             if (cube.shouldRenderFace(facing)) {
-                                                if (cube.getQuad(facing) == null)
-                                                    cube.setQuad(facing, cube.getBakedQuad(quadContext, level, pos, offset, modelState, blockModel, modelData, facing, tuple.key,
-                                                        rand, true, ColorUtils.WHITE));
+                                                if (cube.getQuad(facing) == null) {
+                                                    var bakedQuad = cube.getBakedQuad(quadContext, level, pos, offset, modelState, blockModel, modelData, facing, tuple.key,
+                                                        rand, true, ColorUtils.WHITE);
+                                                    cube.setQuad(facing, bakedQuad);
+                                                }
                                             } else
                                                 cube.setQuad(facing, null);
                                         }

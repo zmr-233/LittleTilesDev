@@ -1189,52 +1189,62 @@ public class LittleTransformableBox extends LittleBox {
         }
         
         public int[] getData() {
-            int indicator = Integer.MIN_VALUE | (0b10111111_00000000_00000000_00000000 & getBox().getIndicator());
-            List<Integer> data = new ArrayList<>();
+            final int baseIndicatorMask = 0b10111111_00000000_00000000_00000000;
+            int indicator = Integer.MIN_VALUE | (getBox().getIndicator() & baseIndicatorMask);
+            BoxCorner[] cornersEnum = BoxCorner.values();
+
+            int[] tmp = new int[corners.length * 3];
+            int tmpPos = 0;
+
             for (int i = 0; i < corners.length; i++) {
                 LittleVec vec = corners[i];
-                if (vec == null)
-                    continue;
-                
-                int index = i * 3;
-                
+                if (vec == null) continue;
+
+                int bitBase = i * 3;
                 if (relative) {
                     if (vec.x != 0) {
-                        indicator = IntegerUtils.set(indicator, index);
-                        data.add(vec.x);
+                        indicator |= (1 << bitBase);
+                        tmp[tmpPos++] = vec.x;
                     }
                     if (vec.y != 0) {
-                        indicator = IntegerUtils.set(indicator, index + 1);
-                        data.add(vec.y);
+                        indicator |= (1 << (bitBase + 1));
+                        tmp[tmpPos++] = vec.y;
                     }
                     if (vec.z != 0) {
-                        indicator = IntegerUtils.set(indicator, index + 2);
-                        data.add(vec.z);
+                        indicator |= (1 << (bitBase + 2));
+                        tmp[tmpPos++] = vec.z;
                     }
                 } else {
-                    BoxCorner corner = BoxCorner.values()[i];
-                    if (vec.x != get(corner, Axis.X)) {
-                        indicator = IntegerUtils.set(indicator, index);
-                        data.add(vec.x - get(corner, Axis.X));
+                    BoxCorner corner = cornersEnum[i];
+                    int bx = get(corner, Axis.X),
+                        by = get(corner, Axis.Y),
+                        bz = get(corner, Axis.Z);
+
+                    if (vec.x != bx) {
+                        indicator |= (1 << bitBase);
+                        tmp[tmpPos++] = vec.x - bx;
                     }
-                    if (vec.y != get(corner, Axis.Y)) {
-                        indicator = IntegerUtils.set(indicator, index + 1);
-                        data.add(vec.y - get(corner, Axis.Y));
+                    if (vec.y != by) {
+                        indicator |= (1 << (bitBase + 1));
+                        tmp[tmpPos++] = vec.y - by;
                     }
-                    if (vec.z != get(corner, Axis.Z)) {
-                        indicator = IntegerUtils.set(indicator, index + 2);
-                        data.add(vec.z - get(corner, Axis.Z));
+                    if (vec.z != bz) {
+                        indicator |= (1 << (bitBase + 2));
+                        tmp[tmpPos++] = vec.z - bz;
                     }
                 }
             }
+
+            int packedLen = 1 + ((tmpPos + 1) >> 1);
+            int[] result = new int[packedLen];
+            result[0] = indicator;
             
-            int[] array = new int[1 + (int) Math.ceil(data.size() / 2D)];
-            array[0] = indicator;
-            for (int i = 0; i < array.length - 1; i++) {
-                int second = i * 2 + 1 < data.size() ? data.get(i * 2 + 1) : 0;
-                array[i + 1] = ((short) (int) data.get(i * 2)) << 16 | ((short) second) & 0xFFFF;
+            for (int i = 0; i < tmpPos; i += 2) {
+                int high = (short) tmp[i];
+                int low  = (i + 1 < tmpPos) ? (short) tmp[i + 1] : 0;
+                result[1 + (i / 2)] = (high << 16) | (low & 0xFFFF);
             }
-            return array;
+            return result;
         }
         
     }

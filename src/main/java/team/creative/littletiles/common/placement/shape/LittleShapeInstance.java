@@ -95,9 +95,17 @@ public class LittleShapeInstance {
     
     public void appendInformation(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("gui.shape").append(": ").append(shape.translatable()));
+    
         var config = getConfig(context.registries(), Side.CLIENT);
-        if (config != null)
-            tooltip.addAll(config.information());
+        
+        if (config != null) {
+            try {
+                tooltip.addAll(config.information());
+            } catch (Exception e) {
+                System.err.println("ERROR: Exception occurred while appending config information for shape: " + shape.getKey());
+                e.printStackTrace();
+            }
+        }
     }
     
     public Component translatable() {
